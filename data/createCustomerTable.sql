@@ -1,0 +1,10 @@
+IF OBJECT_ID('Customer', 'U') IS NULL
+BEGIN
+	CREATE TABLE dbo.Customer (
+		Id INT PRIMARY KEY IDENTITY(1,1),
+		Name NVARCHAR(255),
+		Address NVARCHAR(255),
+		PostCode NVARCHAR(20)
+	);
+END
+GO
