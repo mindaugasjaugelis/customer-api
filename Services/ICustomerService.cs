@@ -42,7 +42,7 @@ namespace Customer.WebApi.Services
 
             var dbCustomers = _customerRepository.GetList();
             var newCustomers = AvoidDuplicates(customers, dbCustomers);
-            _customerRepository.Import(newCustomers);
+            _customerRepository.Insert(newCustomers);
         }
 
         public void RefreshPostCodeFromPostLt()

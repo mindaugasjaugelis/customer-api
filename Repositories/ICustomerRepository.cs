@@ -6,17 +6,21 @@ namespace Customer.WebApi.Services
     public interface ICustomerRepository
     {
         List<CustomerDto> GetList();
-        void Import(List<CustomerDto> list);
+        void Insert(List<CustomerDto> list);
         void Update(CustomerDto toUpdate);
     }
 
     public class CustomerRepository: ICustomerRepository
     {
         private readonly IConnectionProvider _connectionProvider;
+        private readonly ILogRepository _logRepository;
 
-        public CustomerRepository(IConnectionProvider connectionProvider)
+        public CustomerRepository(
+            IConnectionProvider connectionProvider, 
+            ILogRepository logRepository)
         {
             _connectionProvider = connectionProvider;
+            _logRepository = logRepository;
         }
 
         public List<CustomerDto> GetList()
@@ -27,32 +31,46 @@ namespace Customer.WebApi.Services
             return connection.Query<CustomerDto>(query).ToList();
         }
 
-        public void Import(List<CustomerDto> list)
+        public void Insert(List<CustomerDto> list)
         {
             using var connection = _connectionProvider.GetSqlConnection();
             connection.Open();
-
-            string sql = "INSERT INTO dbo.Customer (Name, Address, PostCode) VALUES (@Name, @Address, @PostCode)";
             foreach (var item in list)
             {
-                var parameters = new
+                Insert(item);
+                if (item.Id > 0)
                 {
-                    Name = string.IsNullOrEmpty(item.Name) ? (object)DBNull.Value : item.Name,
-                    Address = string.IsNullOrEmpty(item.Address) ? (object)DBNull.Value : item.Address,
-                    PostCode = string.IsNullOrEmpty(item.PostCode) ? (object)DBNull.Value : item.PostCode
-                };
-
-                connection.Execute(sql, parameters);
+                    _logRepository.Insert(item, Models.Action.Create);
+                }
             }
         }
 
-        public void Update(CustomerDto toUpdate)
+        public void Update(CustomerDto item)
         {
             using var connection = _connectionProvider.GetSqlConnection();
             connection.Open();
 
             string sql = "UPDATE dbo.Customer set PostCode = @PostCode WHERE Id = @Id";
-            connection.Execute(sql, toUpdate);
+            if(connection.Execute(sql, item) > 0)
+            {
+                _logRepository.Insert(item, Models.Action.Update);
+            }
+        }
+
+        private void Insert(CustomerDto item)
+        {
+            using var connection = _connectionProvider.GetSqlConnection();
+            connection.Open();
+
+            string sql = "INSERT INTO dbo.Customer (Name, Address, PostCode) OUTPUT INSERTED.Id VALUES (@Name, @Address, @PostCode)";
+            var parameters = new
+            {
+                Name = string.IsNullOrEmpty(item.Name) ? (object)DBNull.Value : item.Name,
+                Address = string.IsNullOrEmpty(item.Address) ? (object)DBNull.Value : item.Address,
+                PostCode = string.IsNullOrEmpty(item.PostCode) ? (object)DBNull.Value : item.PostCode
+            };
+
+            item.Id = connection.ExecuteScalar<int>(sql, parameters);
         }
     }
 }

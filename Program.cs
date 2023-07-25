@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<IConnectionProvider, ConnectionProvider>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+builder.Services.AddScoped<ILogRepository, LogRepository>();
 builder.Services.AddScoped<ICustomerDataReader, CustomerDataReader>();
 builder.Services.AddScoped<ICustomerService, CustomerService>();
 builder.Services.AddOptions<PostLtOptions>().BindConfiguration(PostLtOptions.ConfigurationPath);
