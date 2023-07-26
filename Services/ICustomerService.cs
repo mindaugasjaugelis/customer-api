@@ -9,7 +9,7 @@ namespace Customer.WebApi.Services
     public interface ICustomerService
     {
         void Import();
-        void RefreshPostCodeFromPostLt();
+        Task RefreshPostCodeFromPostLt();
     }
 
     public class CustomerService : ICustomerService
@@ -45,12 +45,12 @@ namespace Customer.WebApi.Services
             _customerRepository.Insert(newCustomers);
         }
 
-        public void RefreshPostCodeFromPostLt()
+        public async Task RefreshPostCodeFromPostLt()
         {
             var dbCustomers = _customerRepository.GetList();
             foreach(var customer in dbCustomers)
             {
-                RefreshPostCodeFromPostLt(customer);
+                await RefreshPostCodeFromPostLt(customer);
             }
         }
 
@@ -69,9 +69,9 @@ namespace Customer.WebApi.Services
             return curentInDb.Where(x => x.Name == toImport.Name).Any();
         }
 
-        private void RefreshPostCodeFromPostLt(CustomerDto customer)
+        private async Task RefreshPostCodeFromPostLt(CustomerDto customer)
         {
-            var newPostCode = GetAddressPostCode(customer.Address).Result;
+            var newPostCode = await GetAddressPostCode(customer.Address);
             if (newPostCode != null && customer.PostCode != newPostCode)
             {
                 customer.PostCode = newPostCode;

@@ -30,9 +30,9 @@ namespace Customer.WebApi.Controllers
         }
 
         [HttpPost(Name = "RefreshPostCode")]
-        public ActionResult RefreshPostCode()
+        public async Task<ActionResult> RefreshPostCode()
         {
-            _customerService.RefreshPostCodeFromPostLt();
+            await _customerService.RefreshPostCodeFromPostLt();
             return new JsonResult(new { Success = true });
         }
     }
