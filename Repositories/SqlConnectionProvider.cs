@@ -4,21 +4,21 @@ namespace Customer.WebApi.Services
 {
     public interface IConnectionProvider
     {
-        public SqlConnection GetSqlConnection();
+        public SqlConnection GetConnection();
     }
 
-    public class ConnectionProvider : IConnectionProvider
+    public class SqlConnectionProvider : IConnectionProvider
     {
-        private readonly string ConnectionStringName = "CustomConnectionString";
+        private static readonly string ConnectionStringName = "CustomConnectionString";
 
         private readonly IConfiguration _configuration;
 
-        public ConnectionProvider(IConfiguration configuration)
+        public SqlConnectionProvider(IConfiguration configuration)
         {
             _configuration = configuration;
         }
 
-        public SqlConnection GetSqlConnection()
+        public SqlConnection GetConnection()
         {
             return new SqlConnection(_configuration.GetValue<string>(ConnectionStringName));
         }

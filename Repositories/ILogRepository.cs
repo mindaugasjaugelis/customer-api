@@ -7,7 +7,7 @@ namespace Customer.WebApi.Services
 {
     public interface ILogRepository
     {
-        void Insert(CustomerDto item, Models.Action action);
+        Task InsertLogAsync(CustomerDto item, Models.Action action);
     }
 
     public class LogRepository : ILogRepository
@@ -19,12 +19,11 @@ namespace Customer.WebApi.Services
             _connectionProvider = connectionProvider;
         }
 
-        public void Insert(CustomerDto item, Models.Action action)
+        public async Task InsertLogAsync(CustomerDto item, Models.Action action)
         {
-            using var connection = _connectionProvider.GetSqlConnection();
-            connection.Open();
-
-            string sql = @"INSERT INTO dbo.Log (EntityTypeId, EntityId, ActionId, LogCreatedAt, EntityJson)
+            using var sqlConnection = _connectionProvider.GetConnection();
+            sqlConnection.Open();
+            string insertLogSqlQuery = @"INSERT INTO dbo.Log (EntityTypeId, EntityId, ActionId, LogCreatedAt, EntityJson)
                 VALUES (@EntityTypeId, @EntityId, @ActionId, GETDATE(), @EntityJson)";
             var parameters = new
             {
@@ -34,7 +33,7 @@ namespace Customer.WebApi.Services
                 EntityJson = JsonSerializer.Serialize(item)
             };
 
-            connection.Execute(sql, parameters);
+            await sqlConnection.ExecuteAsync(insertLogSqlQuery, parameters);
         }
     }
 }

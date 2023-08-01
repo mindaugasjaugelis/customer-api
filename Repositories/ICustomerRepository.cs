@@ -5,9 +5,9 @@ namespace Customer.WebApi.Services
 {
     public interface ICustomerRepository
     {
-        List<CustomerDto> GetList();
-        void Insert(List<CustomerDto> list);
-        void Update(CustomerDto toUpdate);
+        Task<List<CustomerDto>> GetCustomersAsync();
+        Task InsertCustomersAsync(List<CustomerDto> list);
+        Task<CustomerDto> UpdateCustomerAsync(CustomerDto toUpdate);
     }
 
     public class CustomerRepository: ICustomerRepository
@@ -23,54 +23,57 @@ namespace Customer.WebApi.Services
             _logRepository = logRepository;
         }
 
-        public List<CustomerDto> GetList()
+        public async Task<List<CustomerDto>> GetCustomersAsync()
         {
-            string query = "SELECT * FROM dbo.Customer";
-            using var connection = _connectionProvider.GetSqlConnection();
-            connection.Open();
-            return connection.Query<CustomerDto>(query).ToList();
+            var getCustomersSqlCommand = "SELECT * FROM dbo.Customer";
+            using var sqlConnection = _connectionProvider.GetConnection();
+            sqlConnection.Open();
+            var customers = await sqlConnection.QueryAsync<CustomerDto>(getCustomersSqlCommand);
+            return customers.ToList();
         }
 
-        public void Insert(List<CustomerDto> list)
+        public async Task InsertCustomersAsync(List<CustomerDto> list)
         {
-            using var connection = _connectionProvider.GetSqlConnection();
-            connection.Open();
+            using var sqlConnection = _connectionProvider.GetConnection();
+            sqlConnection.Open();
             foreach (var item in list)
             {
-                Insert(item);
+                await InsertCustomerAsync(item);
                 if (item.Id > 0)
                 {
-                    _logRepository.Insert(item, Models.Action.Create);
+                    await _logRepository.InsertLogAsync(item, Models.Action.Create);
                 }
             }
         }
 
-        public void Update(CustomerDto item)
+        public async Task<CustomerDto> UpdateCustomerAsync(CustomerDto customerToUpdate)
         {
-            using var connection = _connectionProvider.GetSqlConnection();
+            using var connection = _connectionProvider.GetConnection();
             connection.Open();
-
-            string sql = "UPDATE dbo.Customer set PostCode = @PostCode WHERE Id = @Id";
-            if(connection.Execute(sql, item) > 0)
+            var sql = "UPDATE dbo.Customer set PostCode = @PostCode WHERE Id = @Id";
+            int rowsAffected = await connection.ExecuteAsync(sql, customerToUpdate);
+            if (rowsAffected > 0)
             {
-                _logRepository.Insert(item, Models.Action.Update);
+                await _logRepository.InsertLogAsync(customerToUpdate, Models.Action.Update);
             }
+
+            return customerToUpdate;
         }
 
-        private void Insert(CustomerDto item)
+        private async Task<CustomerDto> InsertCustomerAsync(CustomerDto customerToInsert)
         {
-            using var connection = _connectionProvider.GetSqlConnection();
-            connection.Open();
-
-            string sql = "INSERT INTO dbo.Customer (Name, Address, PostCode) OUTPUT INSERTED.Id VALUES (@Name, @Address, @PostCode)";
+            using var sqlConnection = _connectionProvider.GetConnection();
+            sqlConnection.Open();
+            var insertCustomerSqlQuery = "INSERT INTO dbo.Customer (Name, Address, PostCode) OUTPUT INSERTED.Id VALUES (@Name, @Address, @PostCode)";
             var parameters = new
             {
-                Name = string.IsNullOrEmpty(item.Name) ? (object)DBNull.Value : item.Name,
-                Address = string.IsNullOrEmpty(item.Address) ? (object)DBNull.Value : item.Address,
-                PostCode = string.IsNullOrEmpty(item.PostCode) ? (object)DBNull.Value : item.PostCode
+                Name = string.IsNullOrEmpty(customerToInsert.Name) ? (object)DBNull.Value : customerToInsert.Name,
+                Address = string.IsNullOrEmpty(customerToInsert.Address) ? (object)DBNull.Value : customerToInsert.Address,
+                PostCode = string.IsNullOrEmpty(customerToInsert.PostCode) ? (object)DBNull.Value : customerToInsert.PostCode
             };
 
-            item.Id = connection.ExecuteScalar<int>(sql, parameters);
+            customerToInsert.Id = await sqlConnection.ExecuteScalarAsync<int>(insertCustomerSqlQuery, parameters);
+            return customerToInsert;
         }
     }
 }

@@ -8,19 +8,20 @@ namespace Customer.WebApi.Services
 {
     public interface ICustomerService
     {
-        void Import();
+        Task<List<CustomerDto>> GetCustomersAsync();
+        Task ImportCustomers();
         Task RefreshPostCodeFromPostLt();
     }
 
     public class CustomerService : ICustomerService
     {
         readonly PostLtOptions _postLtOptions;
-        private readonly ICustomerDataReader _customerDataReader;
+        private readonly IDataReader _dataReader;
         private readonly ICustomerRepository _customerRepository;
 
         public CustomerService(
             IOptionsSnapshot<PostLtOptions> postLtOptions,
-            ICustomerDataReader customerDataReader,
+            IDataReader dataReader,
             ICustomerRepository customerRepository)
         {
             if (postLtOptions == null)
@@ -29,44 +30,57 @@ namespace Customer.WebApi.Services
             }
 
             _postLtOptions = postLtOptions.Value;
-            _customerDataReader = customerDataReader;
+            _dataReader = dataReader;
             _customerRepository = customerRepository;
         }
 
-        public void Import()
+        public async Task<List<CustomerDto>> GetCustomersAsync()
         {
-            var customers = _customerDataReader.Read("data/customers.json");
-            if (!customers.Any()) {
+            return await _customerRepository.GetCustomersAsync();
+        }
+
+        public async Task ImportCustomers()
+        {
+            var customersToImport = await _dataReader.Read("data/customers.json");
+            if (!customersToImport.Any())
+            {
                 return;
             }
 
-            var dbCustomers = _customerRepository.GetList();
-            var newCustomers = AvoidDuplicates(customers, dbCustomers);
-            _customerRepository.Insert(newCustomers);
+            var dbCustomers = await _customerRepository.GetCustomersAsync();
+            var newCustomers = AvoidDuplicates(customersToImport, dbCustomers);
+            await _customerRepository.InsertCustomersAsync(newCustomers);
         }
 
         public async Task RefreshPostCodeFromPostLt()
         {
-            var dbCustomers = _customerRepository.GetList();
+            var dbCustomers = await _customerRepository.GetCustomersAsync();
             foreach(var customer in dbCustomers)
             {
                 await RefreshPostCodeFromPostLt(customer);
             }
         }
 
-        private static List<CustomerDto> AvoidDuplicates(List<CustomerDto> toImport, List<CustomerDto>? curentInDb)
+        private static List<CustomerDto> AvoidDuplicates(List<CustomerDto> toImport, List<CustomerDto>? currentInDb)
         {
-            if (curentInDb == null || curentInDb.Count == 0) {
+            if (currentInDb == null || currentInDb.Count == 0)
+            {
                 return toImport;
             }
 
-            return toImport.Where(x => !HasDuplicate(x, curentInDb))
+            return toImport
+                .Where(x => !HasDuplicate(x, currentInDb))
                 .ToList();
         }
 
-        private static bool HasDuplicate(CustomerDto toImport, List<CustomerDto> curentInDb)
+        private static bool HasDuplicate(CustomerDto toImport, List<CustomerDto> currentInDb)
         {
-            return curentInDb.Where(x => x.Name == toImport.Name).Any();
+            return currentInDb.Where(x => HasSameName(x.Name, toImport.Name)).Any();
+        }
+
+        private static bool HasSameName(string nameToImport, string nameInDb)
+        {
+            return nameToImport == nameInDb;
         }
 
         private async Task RefreshPostCodeFromPostLt(CustomerDto customer)
@@ -75,7 +89,7 @@ namespace Customer.WebApi.Services
             if (newPostCode != null && customer.PostCode != newPostCode)
             {
                 customer.PostCode = newPostCode;
-                _customerRepository.Update(customer);
+                await _customerRepository.UpdateCustomerAsync(customer);
             }
         }
 
@@ -91,7 +105,7 @@ namespace Customer.WebApi.Services
             using var httpClient = new HttpClient();
             try
             {
-                var url = $"{postLtApiUrl}/?term={GetTerm(address)}&key={postLtKey}";
+                var url = $"{postLtApiUrl}/?term={GetPostLtApiRequestTerm(address)}&key={postLtKey}";
                 var response = await httpClient.GetAsync(url);
                 if (response.IsSuccessStatusCode)
                 {
@@ -115,7 +129,7 @@ namespace Customer.WebApi.Services
             return null;
         }
 
-        private string GetTerm(string address)
+        private static string GetPostLtApiRequestTerm(string address)
         {
             return address.Trim().Replace(" ", "+");
         }

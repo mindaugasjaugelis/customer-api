@@ -8,32 +8,47 @@ namespace Customer.WebApi.Controllers
     public class CustomerController : ControllerBase
     {
         private readonly ICustomerService _customerService;
-        private readonly ICustomerRepository _customerRepository;
 
-        public CustomerController(ICustomerRepository customerRepository, ICustomerService customerService)
+        public CustomerController(ICustomerService customerService)
         {
-            _customerRepository = customerRepository;
             _customerService = customerService;
         }
 
-        [HttpGet(Name = "Get")]
-        public ActionResult Get()
+        [HttpGet(Name = "GetCustomers")]
+        public async Task<ActionResult> GetCustomers()
         {
-            return new JsonResult(new { Success = true, List = _customerRepository.GetList() });
+            var customerList = await _customerService.GetCustomersAsync();
+            var result = new
+            {
+                Success = true,
+                customerList
+            };
+
+            return new JsonResult(result);
         }
 
-        [HttpPost(Name = "Import")]
-        public ActionResult Import()
+        [HttpPost(Name = "ImportCustomers")]
+        public async Task<ActionResult> ImportCustomers()
         {
-            _customerService.Import();
-            return new JsonResult(new { Success = true });
+            await _customerService.ImportCustomers();
+            var successResult = new
+            {
+                Success = true
+            };
+
+            return new JsonResult(successResult);
         }
 
         [HttpPost(Name = "RefreshPostCode")]
         public async Task<ActionResult> RefreshPostCode()
         {
             await _customerService.RefreshPostCodeFromPostLt();
-            return new JsonResult(new { Success = true });
+            var successResult = new
+            {
+                Success = true
+            };
+
+            return new JsonResult(successResult);
         }
     }
 }
