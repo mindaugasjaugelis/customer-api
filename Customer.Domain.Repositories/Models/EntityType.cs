@@ -1,4 +1,4 @@
-﻿namespace Customer.WebApi.Models
+﻿namespace Customer.Domain.Repositories.Models
 {
     public enum EntityType
     {

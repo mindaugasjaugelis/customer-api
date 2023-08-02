@@ -1,4 +1,4 @@
-﻿namespace Customer.WebApi.Models.Resources
+﻿namespace Customer.Application.Abstractions.Configuration
 {
     public class PostLtOptions
     {

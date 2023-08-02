@@ -7,11 +7,40 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Customer.Application.Abstractions\**" />
+    <Compile Remove="Customer.Application.Services\**" />
+    <Compile Remove="Customer.Domain.Models\**" />
+    <Compile Remove="Customer.Domain.Repositories\**" />
+    <Compile Remove="Customer.Infrastructure.DataBase\**" />
+    <Content Remove="Customer.Application.Abstractions\**" />
+    <Content Remove="Customer.Application.Services\**" />
+    <Content Remove="Customer.Domain.Models\**" />
+    <Content Remove="Customer.Domain.Repositories\**" />
+    <Content Remove="Customer.Infrastructure.DataBase\**" />
+    <EmbeddedResource Remove="Customer.Application.Abstractions\**" />
+    <EmbeddedResource Remove="Customer.Application.Services\**" />
+    <EmbeddedResource Remove="Customer.Domain.Models\**" />
+    <EmbeddedResource Remove="Customer.Domain.Repositories\**" />
+    <EmbeddedResource Remove="Customer.Infrastructure.DataBase\**" />
+    <None Remove="Customer.Application.Abstractions\**" />
+    <None Remove="Customer.Application.Services\**" />
+    <None Remove="Customer.Domain.Models\**" />
+    <None Remove="Customer.Domain.Repositories\**" />
+    <None Remove="Customer.Infrastructure.DataBase\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.143" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="7.0.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Customer.Application.Abstractions\Customer.Application.Abstractions.csproj" />
+    <ProjectReference Include="Customer.Application.Services\Customer.Application.Services.csproj" />
+    <ProjectReference Include="Customer.Infrastructure.DataBase\Customer.Infrastructure.DataBase.csproj" />
   </ItemGroup>
 
 </Project>

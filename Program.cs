@@ -1,5 +1,4 @@
-using Customer.WebApi.Models.Resources;
-using Customer.WebApi.Services;
+using Customer.WebApi.StartupExtensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,12 +9,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<IConnectionProvider, ConnectionProvider>();
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<ILogRepository, LogRepository>();
-builder.Services.AddScoped<ICustomerDataReader, CustomerDataReader>();
-builder.Services.AddScoped<ICustomerService, CustomerService>();
-builder.Services.AddOptions<PostLtOptions>().BindConfiguration(PostLtOptions.ConfigurationPath);
+builder.Services.AddCustomerServices();
+builder.Services.AddCustomerRepositories();
+builder.Services.AddCustomerOptions();
 
 var app = builder.Build();
 

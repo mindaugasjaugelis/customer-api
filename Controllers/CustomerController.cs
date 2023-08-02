@@ -1,4 +1,6 @@
-using Customer.WebApi.Services;
+using Customer.Application.Abstractions;
+using Customer.Application.Abstractions.Dtos;
+using Customer.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.WebApi.Controllers
@@ -17,11 +19,12 @@ namespace Customer.WebApi.Controllers
         [HttpGet(Name = "GetCustomers")]
         public async Task<ActionResult> GetCustomers()
         {
-            var customerList = await _customerService.GetCustomersAsync();
+            List<CustomerDto> customerDtosList = await _customerService.GetCustomersAsync();
+            IEnumerable<CustomerModel> customerModelsList = customerDtosList.Select(x => new CustomerModel(x));
             var result = new
             {
                 Success = true,
-                customerList
+                CustomerList = customerModelsList
             };
 
             return new JsonResult(result);
@@ -30,13 +33,8 @@ namespace Customer.WebApi.Controllers
         [HttpPost(Name = "ImportCustomers")]
         public async Task<ActionResult> ImportCustomers()
         {
-            await _customerService.ImportCustomers();
-            var successResult = new
-            {
-                Success = true
-            };
-
-            return new JsonResult(successResult);
+            ImportCustomersFromFileResult importCustomersFromFileResult = await _customerService.ImportCustomers();
+            return new JsonResult(importCustomersFromFileResult);
         }
 
         [HttpPost(Name = "RefreshPostCode")]

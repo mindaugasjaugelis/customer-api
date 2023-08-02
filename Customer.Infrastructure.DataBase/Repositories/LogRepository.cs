@@ -1,28 +1,26 @@
 ﻿using System.Text.Json;
-using Customer.WebApi.Models;
-using Customer.WebApi.Models.Customer;
+using Customer.Domain.Models;
+using Customer.Domain.Repositories;
+using Customer.Infrastructure.DataBase.Abstractions;
+using Action = Customer.Domain.Repositories.Models.Action;
 using Dapper;
+using Customer.Domain.Repositories.Models;
+using Microsoft.Data.SqlClient;
 
-namespace Customer.WebApi.Services
+namespace Customer.Infrastructure.DataBase.Repositories
 {
-    public interface ILogRepository
-    {
-        Task InsertLogAsync(CustomerDto item, Models.Action action);
-    }
-
     public class LogRepository : ILogRepository
     {
-        private readonly IConnectionProvider _connectionProvider;
+        private readonly ISqlConnectionProvider _connectionProvider;
 
-        public LogRepository(IConnectionProvider connectionProvider)
+        public LogRepository(ISqlConnectionProvider connectionProvider)
         {
             _connectionProvider = connectionProvider;
         }
 
-        public async Task InsertLogAsync(CustomerDto item, Models.Action action)
+        public async Task InsertLogAsync(CustomerEntity item, Action action)
         {
-            using var sqlConnection = _connectionProvider.GetConnection();
-            sqlConnection.Open();
+            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
             string insertLogSqlQuery = @"INSERT INTO dbo.Log (EntityTypeId, EntityId, ActionId, LogCreatedAt, EntityJson)
                 VALUES (@EntityTypeId, @EntityId, @ActionId, GETDATE(), @EntityJson)";
             var parameters = new

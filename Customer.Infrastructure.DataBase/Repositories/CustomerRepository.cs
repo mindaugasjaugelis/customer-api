@@ -1,69 +1,61 @@
-﻿using Customer.WebApi.Models.Customer;
+﻿using Customer.Domain.Models;
+using Customer.Domain.Repositories;
+using Customer.Infrastructure.DataBase.Abstractions;
 using Dapper;
+using Microsoft.Data.SqlClient;
+using Action = Customer.Domain.Repositories.Models.Action;
 
-namespace Customer.WebApi.Services
+namespace Customer.Infrastructure.DataBase.Repositories
 {
-    public interface ICustomerRepository
-    {
-        Task<List<CustomerDto>> GetCustomersAsync();
-        Task InsertCustomersAsync(List<CustomerDto> list);
-        Task<CustomerDto> UpdateCustomerAsync(CustomerDto toUpdate);
-    }
-
     public class CustomerRepository: ICustomerRepository
     {
-        private readonly IConnectionProvider _connectionProvider;
+        private readonly ISqlConnectionProvider _connectionProvider;
         private readonly ILogRepository _logRepository;
 
         public CustomerRepository(
-            IConnectionProvider connectionProvider, 
+            ISqlConnectionProvider connectionProvider,
             ILogRepository logRepository)
         {
             _connectionProvider = connectionProvider;
             _logRepository = logRepository;
         }
 
-        public async Task<List<CustomerDto>> GetCustomersAsync()
+        public async Task<List<CustomerEntity>> GetCustomersAsync()
         {
             var getCustomersSqlCommand = "SELECT * FROM dbo.Customer";
-            using var sqlConnection = _connectionProvider.GetConnection();
-            sqlConnection.Open();
-            var customers = await sqlConnection.QueryAsync<CustomerDto>(getCustomersSqlCommand);
+            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
+            IEnumerable<CustomerEntity> customers = await sqlConnection.QueryAsync<CustomerEntity>(getCustomersSqlCommand);
             return customers.ToList();
         }
 
-        public async Task InsertCustomersAsync(List<CustomerDto> list)
+        public async Task InsertCustomersAsync(List<CustomerEntity> list)
         {
-            using var sqlConnection = _connectionProvider.GetConnection();
-            sqlConnection.Open();
             foreach (var item in list)
             {
                 await InsertCustomerAsync(item);
                 if (item.Id > 0)
                 {
-                    await _logRepository.InsertLogAsync(item, Models.Action.Create);
+                    await _logRepository.InsertLogAsync(item, Action.Create);
                 }
             }
         }
 
-        public async Task<CustomerDto> UpdateCustomerAsync(CustomerDto customerToUpdate)
+        public async Task<CustomerEntity> UpdateCustomerAsync(CustomerEntity customerToUpdate)
         {
-            using var connection = _connectionProvider.GetConnection();
-            connection.Open();
+            await using SqlConnection connection = await _connectionProvider.OpenConnectionAsync();
             var sql = "UPDATE dbo.Customer set PostCode = @PostCode WHERE Id = @Id";
             int rowsAffected = await connection.ExecuteAsync(sql, customerToUpdate);
             if (rowsAffected > 0)
             {
-                await _logRepository.InsertLogAsync(customerToUpdate, Models.Action.Update);
+                await _logRepository.InsertLogAsync(customerToUpdate, Action.Update);
             }
 
             return customerToUpdate;
         }
 
-        private async Task<CustomerDto> InsertCustomerAsync(CustomerDto customerToInsert)
+        private async Task<CustomerEntity> InsertCustomerAsync(CustomerEntity customerToInsert)
         {
-            using var sqlConnection = _connectionProvider.GetConnection();
-            sqlConnection.Open();
+            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
             var insertCustomerSqlQuery = "INSERT INTO dbo.Customer (Name, Address, PostCode) OUTPUT INSERTED.Id VALUES (@Name, @Address, @PostCode)";
             var parameters = new
             {
