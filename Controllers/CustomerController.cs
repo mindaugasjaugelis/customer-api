@@ -1,6 +1,5 @@
 using Customer.Application.Abstractions;
 using Customer.Application.Abstractions.Dtos;
-using Customer.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.WebApi.Controllers
@@ -20,11 +19,10 @@ namespace Customer.WebApi.Controllers
         public async Task<ActionResult> GetCustomers()
         {
             List<CustomerDto> customerDtosList = await _customerService.GetCustomersAsync();
-            IEnumerable<CustomerModel> customerModelsList = customerDtosList.Select(x => new CustomerModel(x));
             var result = new
             {
                 Success = true,
-                CustomerList = customerModelsList
+                CustomerList = customerDtosList
             };
 
             return new JsonResult(result);
