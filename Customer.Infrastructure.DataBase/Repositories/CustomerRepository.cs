@@ -1,4 +1,7 @@
-﻿using Customer.Domain.Models;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Customer.Domain.Models;
 using Customer.Domain.Repositories;
 using Customer.Infrastructure.DataBase.Abstractions;
 using Dapper;

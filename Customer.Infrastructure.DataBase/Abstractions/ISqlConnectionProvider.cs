@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.SqlClient;
+﻿using System.Threading.Tasks;
+using Microsoft.Data.SqlClient;
 
 namespace Customer.Infrastructure.DataBase.Abstractions
 {

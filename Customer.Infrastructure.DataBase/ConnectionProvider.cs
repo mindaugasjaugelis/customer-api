@@ -1,4 +1,5 @@
-﻿using Customer.Infrastructure.DataBase.Abstractions;
+﻿using System.Threading.Tasks;
+using Customer.Infrastructure.DataBase.Abstractions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Options;
 
@@ -15,7 +16,7 @@ namespace Customer.Infrastructure.DataBase
 
         public async Task<SqlConnection> OpenConnectionAsync()
         {
-            SqlConnection connection = new(_connectionString);
+            var connection = new SqlConnection(_connectionString);
             await connection.OpenAsync();
             return connection;
         }
