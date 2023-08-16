@@ -1,4 +1,6 @@
-﻿using Customer.Domain.Models;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Customer.Domain.Models;
 
 namespace Customer.Domain.Repositories
 {

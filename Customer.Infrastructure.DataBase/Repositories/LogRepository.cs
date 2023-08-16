@@ -6,7 +6,6 @@ using Customer.Infrastructure.DataBase.Abstractions;
 using Action = Customer.Domain.Repositories.Models.Action;
 using Dapper;
 using Customer.Domain.Repositories.Models;
-using Microsoft.Data.SqlClient;
 
 namespace Customer.Infrastructure.DataBase.Repositories
 {
@@ -21,7 +20,7 @@ namespace Customer.Infrastructure.DataBase.Repositories
 
         public async Task InsertLogAsync(CustomerEntity item, Action action)
         {
-            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
+            await using var sqlConnection = await _connectionProvider.OpenConnectionAsync();
             string insertLogSqlQuery = @"INSERT INTO dbo.Log (EntityTypeId, EntityId, ActionId, LogCreatedAt, EntityJson)
                 VALUES (@EntityTypeId, @EntityId, @ActionId, GETDATE(), @EntityJson)";
             var parameters = new

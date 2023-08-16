@@ -3,6 +3,7 @@ using Customer.Application.Services.DataReader;
 using Customer.Infrastructure.DataBase.Abstractions;
 using Customer.Infrastructure.DataBase;
 using Customer.WebApi.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Customer.WebApi.StartupExtensions
 {
@@ -13,6 +14,7 @@ namespace Customer.WebApi.StartupExtensions
             services.AddSingleton<ISqlConnectionProvider, SqlConnectionProvider>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IDataReader, FileDataReader>();
+            services.AddScoped<IPostLtClient, PostLtClient>();
         }
     }
 }

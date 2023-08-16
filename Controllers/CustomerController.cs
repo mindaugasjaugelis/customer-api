@@ -1,5 +1,5 @@
+using System.Threading.Tasks;
 using Customer.Application.Abstractions;
-using Customer.Application.Abstractions.Dtos;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Customer.WebApi.Controllers
@@ -18,7 +18,7 @@ namespace Customer.WebApi.Controllers
         [HttpGet(Name = "GetCustomers")]
         public async Task<ActionResult> GetCustomers()
         {
-            List<CustomerDto> customerDtosList = await _customerService.GetCustomersAsync();
+            var customerDtosList = await _customerService.GetCustomersAsync();
             var result = new
             {
                 Success = true,
@@ -31,17 +31,17 @@ namespace Customer.WebApi.Controllers
         [HttpPost(Name = "ImportCustomers")]
         public async Task<ActionResult> ImportCustomers()
         {
-            ImportCustomersFromFileResult importCustomersFromFileResult = await _customerService.ImportCustomers();
+            var importCustomersFromFileResult = await _customerService.ImportFromFile();
             return new JsonResult(importCustomersFromFileResult);
         }
 
         [HttpPost(Name = "RefreshPostCode")]
         public async Task<ActionResult> RefreshPostCode()
         {
-            await _customerService.RefreshPostCodeFromPostLt();
+            var refreshPostCodeFromPostLtSuccess = await _customerService.RefreshPostCodeFromPostLt();
             var successResult = new
             {
-                Success = true
+                Success = refreshPostCodeFromPostLtSuccess
             };
 
             return new JsonResult(successResult);

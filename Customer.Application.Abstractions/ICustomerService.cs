@@ -1,11 +1,13 @@
-﻿using Customer.Application.Abstractions.Dtos;
+﻿using System.Collections.Generic;
+using System.Threading.Tasks;
+using Customer.Application.Abstractions.Dtos;
 
 namespace Customer.Application.Abstractions
 {
     public interface ICustomerService
     {
         Task<List<CustomerDto>> GetCustomersAsync();
-        Task<ImportCustomersFromFileResult> ImportCustomers();
-        Task RefreshPostCodeFromPostLt();
+        Task<ImportCustomersFromFileResult> ImportFromFile();
+        Task<bool> RefreshPostCodeFromPostLt();
     }
 }

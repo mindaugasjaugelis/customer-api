@@ -1,4 +1,8 @@
-﻿using Customer.Application.Abstractions;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using Customer.Application.Abstractions;
 using Customer.Application.Abstractions.Dtos;
 using Customer.Application.Services.Dtos;
 
@@ -8,10 +12,10 @@ namespace Customer.Application.Services.DataReader
     {
         public async Task<ReadCustomersFileResult> Read(string path)
         {
-            ReadFileContentResult readFileContentResult = await ReadFileContent(path);
+            var readFileContentResult = await ReadFileContent(path);
             if (readFileContentResult.Success)
             {
-                DeserializeFileContentToCustomersListResult deserializeFileContentToCustomersListResult =
+                var deserializeFileContentToCustomersListResult =
                     DeserializeFileContentToCustomerImportList(readFileContentResult.Content);
 
                 return new ReadCustomersFileResult(deserializeFileContentToCustomersListResult.Success)
@@ -23,8 +27,8 @@ namespace Customer.Application.Services.DataReader
 
             return new ReadCustomersFileResult(false)
             {
-                Success = false,
-                ErrorMessage = readFileContentResult.ErrorMessage
+                ErrorMessage = readFileContentResult.ErrorMessage,
+                Customers = new List<CustomerImportDto>()
             };
         }
 
@@ -32,20 +36,19 @@ namespace Customer.Application.Services.DataReader
         {
             try
             {
-                List<CustomerImportDto> deserializedCustomers = Newtonsoft.Json.JsonConvert
+                var deserializedCustomers = Newtonsoft.Json.JsonConvert
                     .DeserializeObject<List<CustomerImportDto>>(fileContent)
                     ?? new List<CustomerImportDto>();
 
-                return new DeserializeFileContentToCustomersListResult
+                return new DeserializeFileContentToCustomersListResult(true)
                 {
                     Customers = deserializedCustomers
                 };
             }
             catch (Exception ex)
             {
-                return new DeserializeFileContentToCustomersListResult
+                return new DeserializeFileContentToCustomersListResult(false)
                 {
-                    Success = false,
                     ErrorMessage = ex.Message
                 };
             }
@@ -55,17 +58,16 @@ namespace Customer.Application.Services.DataReader
         {
             try
             {
-                string fileContent = await File.ReadAllTextAsync(path);
-                return new ReadFileContentResult
+                var fileContent = await File.ReadAllTextAsync(path);
+                return new ReadFileContentResult(true)
                 {
                     Content = fileContent
                 };
             }
             catch (Exception ex)
             {
-                return new ReadFileContentResult
+                return new ReadFileContentResult(false)
                 {
-                    Success = false,
                     ErrorMessage = ex.Message
                 };
             }

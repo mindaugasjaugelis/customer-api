@@ -1,5 +1,6 @@
 ﻿using Customer.Infrastructure.DataBase;
 using Customer.Application.Abstractions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Customer.WebApi.StartupExtensions
 {

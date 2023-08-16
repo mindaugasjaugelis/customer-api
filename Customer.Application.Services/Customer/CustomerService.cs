@@ -1,8 +1,10 @@
-﻿using System.Text.Json;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using Customer.Application.Abstractions;
 using Customer.Application.Abstractions.Configuration;
 using Customer.Application.Abstractions.Dtos;
-using Customer.Application.Services.Dtos;
 using Customer.Domain.Models;
 using Customer.Domain.Repositories;
 using Microsoft.Extensions.Options;
@@ -13,11 +15,13 @@ namespace Customer.WebApi.Services
     {
         readonly PostLtOptions _postLtOptions;
         private readonly IDataReader _dataReader;
+        private readonly IPostLtClient _postLtClient;
         private readonly ICustomerRepository _customerRepository;
 
         public CustomerService(
             IOptionsSnapshot<PostLtOptions> postLtOptions,
             IDataReader dataReader,
+            IPostLtClient postLtClient,
             ICustomerRepository customerRepository)
         {
             if (postLtOptions == null)
@@ -27,20 +31,21 @@ namespace Customer.WebApi.Services
 
             _postLtOptions = postLtOptions.Value;
             _dataReader = dataReader;
+            _postLtClient = postLtClient;
             _customerRepository = customerRepository;
         }
 
         public async Task<List<CustomerDto>> GetCustomersAsync()
         {
-            List<CustomerEntity> customerEntities = await _customerRepository.GetCustomersAsync();
+            var customerEntities = await _customerRepository.GetCustomersAsync();
             return customerEntities
                 .Select(x => new CustomerDto(x))
                 .ToList();
         }
 
-        public async Task<ImportCustomersFromFileResult> ImportCustomers()
+        public async Task<ImportCustomersFromFileResult> ImportFromFile()
         {
-            ReadCustomersFileResult readCustomersFileResponse = await _dataReader.Read("data/customers.json");
+            var readCustomersFileResponse = await _dataReader.Read("data/customers.json");
             if (!readCustomersFileResponse.Success)
             {
                 return new ImportCustomersFromFileResult(false)
@@ -49,27 +54,35 @@ namespace Customer.WebApi.Services
                 };
             }
 
-            IEnumerable<CustomerEntity> dbCustomers = await _customerRepository.GetCustomersAsync();
-            List<CustomerImportDto> uqCustomers = AvoidDuplicates(readCustomersFileResponse.Customers, dbCustomers.ToList());
-            List<CustomerEntity> customerEntitiesToImport = uqCustomers
+            var dbCustomers = await _customerRepository.GetCustomersAsync();
+            var uqCustomers = AvoidDuplicates(readCustomersFileResponse.Customers, dbCustomers.ToList());
+            var customerEntitiesToImport = uqCustomers
                 .Select(x => x.ToCustomerEntity())
                 .ToList();
             await _customerRepository.InsertCustomersAsync(customerEntitiesToImport);
             return new ImportCustomersFromFileResult(true);
         }
 
-        public async Task RefreshPostCodeFromPostLt()
+        public async Task<bool> RefreshPostCodeFromPostLt()
         {
-            List<CustomerEntity> dbCustomers = await _customerRepository.GetCustomersAsync();
-            foreach (CustomerEntity customer in dbCustomers)
+            var dbCustomers = await _customerRepository.GetCustomersAsync();
+            var success = true;
+            foreach (var customer in dbCustomers)
             {
-                await RefreshPostCodeFromPostLt(customer);
+                var refreshPostCodeFromPostLtSuccess = await RefreshPostCodeFromPostLt(customer);
+                if (!refreshPostCodeFromPostLtSuccess)
+                {
+                    success = false;
+                }
             }
+
+            //TODO: return error message for each refresh iteration if error occur
+            return success;
         }
 
         private static List<CustomerImportDto> AvoidDuplicates(List<CustomerImportDto> toImport, List<CustomerEntity> currentInDb)
         {
-            if (currentInDb == null || currentInDb.Count == 0)
+            if (currentInDb.Count == 0)
             {
                 return toImport;
             }
@@ -89,55 +102,27 @@ namespace Customer.WebApi.Services
             return nameToImport == nameInDb;
         }
 
-        private async Task RefreshPostCodeFromPostLt(CustomerEntity customer)
+        private async Task<bool> RefreshPostCodeFromPostLt(CustomerEntity customer)
         {
-            string freshCutomerPostCode = await GetAddressPostCode(customer.Address);
-            if (!string.IsNullOrEmpty(freshCutomerPostCode) && customer.PostCode != freshCutomerPostCode)
+            var postLtResponse = await _postLtClient.GetByAddress(customer.Address);
+            if (!postLtResponse.Success.HasValue || !postLtResponse.Success.Value)
             {
-                customer.PostCode = freshCutomerPostCode;
+                return false;
+            }
+
+            var postCodeReceived = postLtResponse.Data.FirstOrDefault()?.PostCode;
+            if (string.IsNullOrEmpty(postCodeReceived))
+            {
+                return false;
+            }
+
+            if (customer.PostCode != postCodeReceived)
+            {
+                customer.PostCode = postCodeReceived;
                 await _customerRepository.UpdateCustomerAsync(customer);
             }
-        }
 
-        private async Task<string> GetAddressPostCode(string address)
-        {
-            if (string.IsNullOrEmpty(address))
-            {
-                return string.Empty;
-            }
-
-            var postLtApiUrl = _postLtOptions.BaseUrl;
-            var postLtKey = _postLtOptions.Key;
-            using var httpClient = new HttpClient();
-            try
-            {
-                var url = $"{postLtApiUrl}/?term={GetPostLtApiRequestTerm(address)}&key={postLtKey}";
-                var response = await httpClient.GetAsync(url);
-                if (response.IsSuccessStatusCode)
-                {
-                    var jsonResult = await response.Content.ReadAsStringAsync();
-                    var result = JsonSerializer.Deserialize<PostCodeRefreshResponse>(jsonResult);
-                    if (result?.Success == true && result.Data?.Count > 0)
-                    {
-                        return result.Data.First().PostCode ?? string.Empty;
-                    }
-                }
-                else
-                {
-                    Console.WriteLine($"API request failed with status code: {response.StatusCode}");
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                Console.WriteLine($"HTTP request failed: {ex.Message}");
-            }
-
-            return null;
-        }
-
-        private static string GetPostLtApiRequestTerm(string address)
-        {
-            return address.Trim().Replace(" ", "+");
+            return true;
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Customer.Domain.Repositories;
 using Customer.Infrastructure.DataBase.Repositories;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Customer.WebApi.StartupExtensions
 {

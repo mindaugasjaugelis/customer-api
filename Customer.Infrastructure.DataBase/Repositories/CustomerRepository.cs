@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Customer.Domain.Models;
 using Customer.Domain.Repositories;
 using Customer.Infrastructure.DataBase.Abstractions;
@@ -26,8 +27,8 @@ namespace Customer.Infrastructure.DataBase.Repositories
         public async Task<List<CustomerEntity>> GetCustomersAsync()
         {
             var getCustomersSqlCommand = "SELECT * FROM dbo.Customer";
-            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
-            IEnumerable<CustomerEntity> customers = await sqlConnection.QueryAsync<CustomerEntity>(getCustomersSqlCommand);
+            await using var sqlConnection = await _connectionProvider.OpenConnectionAsync();
+            var customers = await sqlConnection.QueryAsync<CustomerEntity>(getCustomersSqlCommand);
             return customers.ToList();
         }
 
@@ -58,7 +59,7 @@ namespace Customer.Infrastructure.DataBase.Repositories
 
         private async Task<CustomerEntity> InsertCustomerAsync(CustomerEntity customerToInsert)
         {
-            await using SqlConnection sqlConnection = await _connectionProvider.OpenConnectionAsync();
+            await using var sqlConnection = await _connectionProvider.OpenConnectionAsync();
             var insertCustomerSqlQuery = "INSERT INTO dbo.Customer (Name, Address, PostCode) OUTPUT INSERTED.Id VALUES (@Name, @Address, @PostCode)";
             var parameters = new
             {

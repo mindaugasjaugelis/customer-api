@@ -1,4 +1,5 @@
-﻿using Customer.Application.Abstractions.Dtos;
+﻿using System.Threading.Tasks;
+using Customer.Application.Abstractions.Dtos;
 
 namespace Customer.Application.Abstractions
 {
