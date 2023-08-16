@@ -6,21 +6,25 @@
 
   <ItemGroup>
     <Compile Remove="Customer.Application.Abstractions\**" />
+    <Compile Remove="Customer.Application.Services.Tests\**" />
     <Compile Remove="Customer.Application.Services\**" />
     <Compile Remove="Customer.Domain.Models\**" />
     <Compile Remove="Customer.Domain.Repositories\**" />
     <Compile Remove="Customer.Infrastructure.DataBase\**" />
     <Content Remove="Customer.Application.Abstractions\**" />
+    <Content Remove="Customer.Application.Services.Tests\**" />
     <Content Remove="Customer.Application.Services\**" />
     <Content Remove="Customer.Domain.Models\**" />
     <Content Remove="Customer.Domain.Repositories\**" />
     <Content Remove="Customer.Infrastructure.DataBase\**" />
     <EmbeddedResource Remove="Customer.Application.Abstractions\**" />
+    <EmbeddedResource Remove="Customer.Application.Services.Tests\**" />
     <EmbeddedResource Remove="Customer.Application.Services\**" />
     <EmbeddedResource Remove="Customer.Domain.Models\**" />
     <EmbeddedResource Remove="Customer.Domain.Repositories\**" />
     <EmbeddedResource Remove="Customer.Infrastructure.DataBase\**" />
     <None Remove="Customer.Application.Abstractions\**" />
+    <None Remove="Customer.Application.Services.Tests\**" />
     <None Remove="Customer.Application.Services\**" />
     <None Remove="Customer.Domain.Models\**" />
     <None Remove="Customer.Domain.Repositories\**" />

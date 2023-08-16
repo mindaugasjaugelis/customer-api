@@ -9,7 +9,7 @@ using Customer.Domain.Models;
 using Customer.Domain.Repositories;
 using Microsoft.Extensions.Options;
 
-namespace Customer.WebApi.Services
+namespace Customer.WebApi.Services.Customer
 {
     public class CustomerService : ICustomerService
     {

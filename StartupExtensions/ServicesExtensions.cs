@@ -4,6 +4,7 @@ using Customer.Infrastructure.DataBase.Abstractions;
 using Customer.Infrastructure.DataBase;
 using Customer.WebApi.Services;
 using Microsoft.Extensions.DependencyInjection;
+using Customer.WebApi.Services.Customer;
 
 namespace Customer.WebApi.StartupExtensions
 {
