@@ -39,7 +39,6 @@ namespace Customer.Application.Services.Tests.Customer
 
             _customerRepository.Setup(x => x.GetCustomersAsync()).ReturnsAsync(getCustomersResult);
             _customerService = new CustomerService(
-                _postLtOptions.Object,
                 _dataReader.Object,
                 _postLtClient.Object,
                 _customerRepository.Object);
@@ -55,5 +54,7 @@ namespace Customer.Application.Services.Tests.Customer
             Assert.That(getCustomersResult, Is.Not.Null);
             Assert.That(getCustomersResult.Count == 1, Is.True);
         }
+
+        //TODO: Add other CustomerService tests, add other services tests
     }
 }

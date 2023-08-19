@@ -1,35 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Customer.Application.Abstractions;
-using Customer.Application.Abstractions.Configuration;
 using Customer.Application.Abstractions.Dtos;
 using Customer.Domain.Models;
 using Customer.Domain.Repositories;
-using Microsoft.Extensions.Options;
 
 namespace Customer.WebApi.Services.Customer
 {
     public class CustomerService : ICustomerService
     {
-        readonly PostLtOptions _postLtOptions;
         private readonly IDataReader _dataReader;
         private readonly IPostLtClient _postLtClient;
         private readonly ICustomerRepository _customerRepository;
 
         public CustomerService(
-            IOptionsSnapshot<PostLtOptions> postLtOptions,
             IDataReader dataReader,
             IPostLtClient postLtClient,
             ICustomerRepository customerRepository)
         {
-            if (postLtOptions == null)
-            {
-                throw new ArgumentNullException(nameof(postLtOptions));
-            }
-
-            _postLtOptions = postLtOptions.Value;
             _dataReader = dataReader;
             _postLtClient = postLtClient;
             _customerRepository = customerRepository;
